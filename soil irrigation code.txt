@@ -1,0 +1,20 @@
+int sensorPin = A0;    // select the input pin for the sensor
+int pump = 13;      // select the pin for the motor pump
+int sensorValue = 0;  // variable to store the value coming from the sensor
+void setup() {
+pinMode(pump, OUTPUT); // Mode of the Pin
+Serial.begin(9600);  // Serial display value
+}
+void loop() {
+sensorValue = analogRead(sensorPin); //read sensor value
+Serial.println(sensorValue); // display sensor value in serail display
+if (sensorValue <=350) // condition for the sensor 
+{
+digitalWrite(pump, HIGH); // if the sensor is lessthan 350 then water pump will switch OFF
+}
+else 
+{
+digitalWrite(pump, LOW);// Else water pump will switch ON
+} 
+}
+}
