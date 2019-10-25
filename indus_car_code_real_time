@@ -1,0 +1,106 @@
+#include<String.h>
+int val_1,val_2,aval,t1,t2,a; /*val_1 button1, val_2 button 2, aval alc, a mic, t1 time of u1, t2 time of u2 */
+float d1,d2;/* d1 dist of u1, d2 dist of u2*/
+
+#define BLYNK_PRINT Serial
+#include <ESP8266_Lib.h>
+#include <BlynkSimpleShieldEsp8266.h>
+BlynkTimer timer;
+#define EspSerial Serial
+#define ESP8266_BAUD 115200
+ESP8266 wifi(&EspSerial);
+
+char auth[] = "6ff7ab98554d4251aab127bd5d65a465";
+char ssid[] = "JioFi2_1CEA2F";
+char pass[] = "4e3zadgmce";
+
+void setup()
+{
+Serial.begin(115200);
+//pinMode 2 is Ultrasonic Sensor 1
+//pinMode 3 is Ultrasonic Sensor 2 
+  pinMode(8, OUTPUT);// Relay (Seatbelt Mechanism)
+  pinMode(A0,INPUT);//  Alcohol Sensor
+  pinMode(9,OUTPUT);//  Buzzer 1
+  pinMode(10,OUTPUT);// Buzzer 2
+  pinMode(A1,INPUT); // MIC SENSOR
+  pinMode(12,OUTPUT); // LED FOR BREATH TEST green
+  pinMode(11,OUTPUT); //22 red led
+  pinMode(4,INPUT);//button1
+  pinMode(5,INPUT);//button2
+  digitalWrite(11,LOW);
+  digitalWrite(8,HIGH);
+//wifi module
+  EspSerial.begin(ESP8266_BAUD);
+  delay(10);
+  Blynk.begin(auth, wifi, ssid, pass);
+  Blynk.email("roopakleaprobots@gmail.com"," notification", "IOT service started ");
+  Blynk.notify("IOT service started");
+  Blynk.tweet("IOT service started");
+  timer.setInterval(1000L, sendSensor);
+}
+
+void sendSensor()
+{
+  
+  a=digitalRead(A1); //mic sensor 
+  Serial.println(a);
+  Blynk.virtualWrite(V1,a);
+  aval=analogRead(A0); // alcohol
+  Serial.println("alchol value:"+String(aval));
+Serial.println("Waiting for breath test");
+digitalWrite(12,LOW); // green led
+while(a==0)
+ {
+  Serial.println("breath test done");
+  digitalWrite(12,HIGH);// breath test done green led
+  Blynk.virtualWrite(V2,aval); 
+  //for car crash
+  if ( aval<500 )
+  {
+    digitalWrite(11,HIGH);// ALCOHOL TEST DONE INDICATION red
+    digitalWrite(8,LOW);//relay
+    int val_1=digitalRead(4);
+  if(val_1 == 1|| val_2 == 1)
+  {
+  Blynk.email("roopakleaprobots@gmail.com", "Crash alert", " car is crashed ");
+  Blynk.notify("car is crashed");
+  Blynk.tweet("car is crashed");
+  }
+// 2 nd ultrasonic
+pinMode(3,OUTPUT);
+digitalWrite(3,LOW);
+delayMicroseconds(10);
+digitalWrite(3,HIGH);
+delayMicroseconds(10);
+digitalWrite(3,LOW);
+delayMicroseconds(10);
+pinMode(3,INPUT);
+t2=pulseIn(3,HIGH);
+Serial.println("Time taken by the signal : " + String(t2)+" ms");
+d2=0.0343*t2/2;
+Serial.println("Distance 2 : " + String(d2)+" cm");
+//delay(50);
+if(d2 < 30)
+ digitalWrite(10,HIGH);//buzzer2
+else
+ digitalWrite(10,LOW);
+ Blynk.virtualWrite(V4,d2);
+  }
+  else
+  {
+  digitalWrite(8,HIGH); // relay OFF
+  digitalWrite(11,LOW);
+  Blynk.email("roopakleaprobots@gmail.com", "alcohol alert", " over drunk, engine off ");
+  Blynk.notify("over drunk, engine off");
+  Blynk.tweet("over drunk, engine off");
+   }
+  }
+}
+
+void loop() {
+ 
+  Blynk.run();
+  timer.run();
+  
+}
